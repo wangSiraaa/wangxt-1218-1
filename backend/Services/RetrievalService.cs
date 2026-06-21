@@ -1,3 +1,4 @@
+using JudicialEvidence.Api.Models;
 using JudicialEvidence.Api.Models.Dtos;
 using JudicialEvidence.Api.Models.Entities;
 using JudicialEvidence.Api.Repositories;
@@ -8,7 +9,7 @@ public interface IRetrievalService
 {
     Task<RetrievalLogDto> CreateAsync(RetrievalRequest request, long userId);
     Task<(Stream Stream, string FileName, string ContentType)> DownloadAsync(long logId);
-    Task<List<RetrievalLogDto>> ListAsync(long? caseId, long? userId, string? purpose);
+    Task<List<RetrievalLogDto>> ListAsync(long? caseId, long? userId, RetrievalPurposeTag? purposeTag, string? purpose);
 }
 
 public class RetrievalService : IRetrievalService
@@ -46,6 +47,7 @@ public class RetrievalService : IRetrievalService
             EvidenceId = evidence.Id,
             CaseId = evidence.CaseId,
             UserId = userId,
+            PurposeTag = request.PurposeTag,
             Purpose = request.Purpose,
             CopyPath = copyPath,
             RetrievedAt = DateTime.UtcNow
@@ -72,9 +74,9 @@ public class RetrievalService : IRetrievalService
         return (stream, fileName, contentType);
     }
 
-    public async Task<List<RetrievalLogDto>> ListAsync(long? caseId, long? userId, string? purpose)
+    public async Task<List<RetrievalLogDto>> ListAsync(long? caseId, long? userId, RetrievalPurposeTag? purposeTag, string? purpose)
     {
-        var logs = await _logs.ListAsync(caseId, userId, purpose);
+        var logs = await _logs.ListAsync(caseId, userId, purposeTag, purpose);
         return logs.Select(r => RetrievalLogDto.From(
             r,
             r.Evidence?.Name ?? "—",

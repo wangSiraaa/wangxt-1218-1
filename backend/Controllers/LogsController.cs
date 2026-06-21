@@ -1,3 +1,4 @@
+using JudicialEvidence.Api.Models;
 using JudicialEvidence.Api.Models.Dtos;
 using JudicialEvidence.Api.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -17,6 +18,7 @@ public class LogsController : ControllerBase
     public async Task<ActionResult<List<RetrievalLogDto>>> List(
         [FromQuery] long? caseId,
         [FromQuery] long? userId,
+        [FromQuery] RetrievalPurposeTag? purposeTag,
         [FromQuery] string? purpose)
-        => Ok(await _retrieval.ListAsync(caseId, userId, purpose));
+        => Ok(await _retrieval.ListAsync(caseId, userId, purposeTag, purpose));
 }

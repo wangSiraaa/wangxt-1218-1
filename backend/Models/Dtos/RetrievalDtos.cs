@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using JudicialEvidence.Api.Models;
 using JudicialEvidence.Api.Models.Entities;
 
 namespace JudicialEvidence.Api.Models.Dtos;
@@ -7,6 +8,9 @@ public class RetrievalRequest
 {
     [Required]
     public long EvidenceId { get; set; }
+
+    [Required]
+    public RetrievalPurposeTag PurposeTag { get; set; }
 
     [Required]
     [MaxLength(256)]
@@ -22,6 +26,8 @@ public class RetrievalLogDto
     public string CaseNumber { get; set; } = string.Empty;
     public long UserId { get; set; }
     public string UserName { get; set; } = string.Empty;
+    public RetrievalPurposeTag PurposeTag { get; set; }
+    public string PurposeTagName { get; set; } = string.Empty;
     public string Purpose { get; set; } = string.Empty;
     public DateTime RetrievedAt { get; set; }
 
@@ -35,6 +41,8 @@ public class RetrievalLogDto
             CaseNumber = caseNumber,
             UserId = r.UserId,
             UserName = userName,
+            PurposeTag = r.PurposeTag,
+            PurposeTagName = RetrievalPurposeTagNames.From(r.PurposeTag),
             Purpose = r.Purpose,
             RetrievedAt = r.RetrievedAt
         };

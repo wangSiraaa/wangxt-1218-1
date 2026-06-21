@@ -107,6 +107,17 @@ function shortHash(h: string) {
   if (!h) return '-'
   return h.length > 16 ? `${h.slice(0, 8)}…${h.slice(-8)}` : h
 }
+function getPurposeTagColor(tag: number): string {
+  const colors: Record<number, string> = {
+    0: 'blue',
+    1: 'cyan',
+    2: 'purple',
+    3: 'orange',
+    4: 'red',
+    99: 'default'
+  }
+  return colors[tag] || 'default'
+}
 
 const columns = [
   { title: '证据名称', dataIndex: 'name' },
@@ -228,7 +239,12 @@ onMounted(loadCases)
           <template #renderItem="{ item }">
             <a-list-item>
               <a-list-item-meta>
-                <template #title>{{ item.userName }} · {{ item.caseNumber }}</template>
+                <template #title>
+                  {{ item.userName }} · {{ item.caseNumber }}
+                  <a-tag :color="getPurposeTagColor(item.purposeTag)" style="margin-left: 8px">
+                    {{ item.purposeTagName || '其他' }}
+                  </a-tag>
+                </template>
                 <template #description>用途：{{ item.purpose }} · {{ fmt(item.retrievedAt) }}</template>
               </a-list-item-meta>
             </a-list-item>

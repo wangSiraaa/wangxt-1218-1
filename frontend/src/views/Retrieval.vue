@@ -3,8 +3,9 @@ import { onMounted, ref, computed, reactive, h } from 'vue'
 import { message } from 'ant-design-vue'
 import { caseApi, evidenceApi, retrievalApi, logsApi } from '@/api/modules'
 import type { CaseDto, EvidenceDto, RetrievalLogDto } from '@/types'
+import { RetrievalPurposeTagOptions } from '@/types'
 import dayjs from 'dayjs'
-import { ReloadOutlined, DownloadOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
+import { ReloadOutlined, DownloadOutlined, FileSearchOutlined, TagOutlined } from '@ant-design/icons-vue'
 
 const loading = ref(false)
 const cases = ref<CaseDto[]>([])
@@ -14,8 +15,12 @@ const selectedEvidenceId = ref<number | undefined>()
 
 const logs = ref<RetrievalLogDto[]>([])
 
-const form = reactive({ purpose: '' })
+const filterForm = reactive({ caseId: undefined as number | undefined, purposeTag: undefined as number | undefined })
+
+const form = reactive({ purposeTag: undefined as number | undefined, purpose: '' })
 const submitting = ref(false)
+
+const purposeTagOptions = RetrievalPurposeTagOptions
 
 async function loadCases() {
   loading.value = true
@@ -23,6 +28,7 @@ async function loadCases() {
     cases.value = await caseApi.list()
     if (cases.value.length) {
       selectedCaseId.value = cases.value[0].id
+      filterForm.caseId = selectedCaseId.value
       await loadEvidence()
     }
   } finally {
@@ -39,8 +45,9 @@ async function loadEvidence() {
 
 async function loadLogs() {
   try {
-    const params: { caseId?: number } = {}
-    if (selectedCaseId.value) params.caseId = selectedCaseId.value
+    const params: { caseId?: number; purposeTag?: number } = {}
+    if (filterForm.caseId) params.caseId = filterForm.caseId
+    if (filterForm.purposeTag !== undefined) params.purposeTag = filterForm.purposeTag
     logs.value = await logsApi.list(params)
   } catch {
     /* ignore */
@@ -52,17 +59,23 @@ async function onSubmit() {
     message.warning('请选择要调阅的证据')
     return
   }
+  if (form.purposeTag === undefined) {
+    message.warning('请选择调阅用途标签')
+    return
+  }
   if (!form.purpose.trim()) {
-    message.warning('请填写调阅用途，调阅必须留痕')
+    message.warning('请填写调阅用途说明，调阅必须留痕')
     return
   }
   submitting.value = true
   try {
     const log = await retrievalApi.create({
       evidenceId: selectedEvidenceId.value,
+      purposeTag: form.purposeTag,
       purpose: form.purpose.trim()
     })
     message.success('调阅申请已登记，可下载庭审展示副本')
+    form.purposeTag = undefined
     form.purpose = ''
     await loadLogs()
     await download(log.id, log.evidenceName)
@@ -97,6 +110,17 @@ function shortHash(h: string) {
   if (!h) return '-'
   return h.length > 16 ? `${h.slice(0, 8)}…${h.slice(-8)}` : h
 }
+function getTagColor(tag: number): string {
+  const colors: Record<number, string> = {
+    0: 'blue',
+    1: 'cyan',
+    2: 'purple',
+    3: 'orange',
+    4: 'red',
+    99: 'default'
+  }
+  return colors[tag] || 'default'
+}
 
 const selectedEvidence = computed(
   () => evidences.value.find((e) => e.id === selectedEvidenceId.value) || null
@@ -106,6 +130,7 @@ const logColumns = [
   { title: '证据名称', dataIndex: 'evidenceName' },
   { title: '案件编号', dataIndex: 'caseNumber', width: 150 },
   { title: '调阅人', dataIndex: 'userName', width: 120 },
+  { title: '用途标签', dataIndex: 'purposeTagName', width: 160 },
   { title: '调阅用途', dataIndex: 'purpose' },
   { title: '调阅时间', dataIndex: 'retrievedAt', width: 150 },
   { title: '操作', key: 'op', width: 110, fixed: 'right' as const }
@@ -185,10 +210,21 @@ onMounted(async () => {
         </a-descriptions>
         <a-empty v-else description="请先选择证据" style="margin: 24px 0" />
         <a-form layout="vertical">
-          <a-form-item label="调阅用途（必填，留痕）" required>
+          <a-form-item label="用途标签（必选）" required>
+            <a-select
+              v-model:value="form.purposeTag"
+              placeholder="请选择调阅用途标签"
+              :disabled="!selectedEvidence"
+            >
+              <a-select-option v-for="opt in purposeTagOptions" :key="opt.value" :value="opt.value">
+                <TagOutlined /> {{ opt.label }}
+              </a-select-option>
+            </a-select>
+          </a-form-item>
+          <a-form-item label="调阅用途说明（必填，留痕）" required>
             <a-textarea
               v-model:value="form.purpose"
-              :rows="4"
+              :rows="3"
               placeholder="如：2026-06-20 第X次庭审质证展示"
               :disabled="!selectedEvidence"
             />
@@ -208,7 +244,7 @@ onMounted(async () => {
           type="info"
           show-icon
           message="系统将生成庭审展示副本并记录调阅日志"
-          description="调阅日志包含案件编号、调阅人、用途与时间，检察官与管理员可查阅。"
+          description="调阅日志包含案件编号、调阅人、用途标签与时间，检察官与管理员可按标签筛选查阅。"
           style="margin-top: 16px"
         />
       </div>
@@ -216,15 +252,43 @@ onMounted(async () => {
 
     <div class="je-card" style="margin-top: 16px">
       <div class="je-block-title"><FileSearchOutlined /> 调阅记录</div>
+      <div class="je-filter-bar">
+        <a-select
+          v-model:value="filterForm.caseId"
+          placeholder="按案件筛选"
+          style="width: 240px; margin-right: 12px"
+          allowClear
+          @change="loadLogs"
+        >
+          <a-select-option v-for="c in cases" :key="c.id" :value="c.id">
+            {{ c.caseNumber }} - {{ c.title }}
+          </a-select-option>
+        </a-select>
+        <a-select
+          v-model:value="filterForm.purposeTag"
+          placeholder="按用途标签筛选"
+          style="width: 200px; margin-right: 12px"
+          allowClear
+          @change="loadLogs"
+        >
+          <a-select-option v-for="opt in purposeTagOptions" :key="opt.value" :value="opt.value">
+            {{ opt.label }}
+          </a-select-option>
+        </a-select>
+      </div>
       <a-table
         :columns="logColumns"
         :data-source="logs"
         row-key="id"
         :pagination="{ pageSize: 8 }"
         size="middle"
+        style="margin-top: 12px"
       >
         <template #bodyCell="{ column, record }">
-          <template v-if="column.dataIndex === 'retrievedAt'">{{ fmt(record.retrievedAt) }}</template>
+          <template v-if="column.dataIndex === 'purposeTagName'">
+            <a-tag :color="getTagColor(record.purposeTag)">{{ record.purposeTagName }}</a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'retrievedAt'">{{ fmt(record.retrievedAt) }}</template>
           <template v-else-if="column.key === 'op'">
             <a-button type="link" size="small" :icon="h(DownloadOutlined)" @click="download(record.id, record.evidenceName)">
               下载
@@ -255,6 +319,11 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+.je-filter-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
 }
 @media (max-width: 960px) {
   .je-grid {

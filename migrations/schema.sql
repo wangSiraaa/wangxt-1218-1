@@ -70,6 +70,7 @@ CREATE TABLE dbo.RetrievalLogs (
     EvidenceId  BIGINT        NOT NULL CONSTRAINT FK_RetrievalLogs_Evidence REFERENCES dbo.Evidence(Id) ON DELETE CASCADE,
     CaseId      BIGINT        NOT NULL CONSTRAINT FK_RetrievalLogs_Cases REFERENCES dbo.Cases(Id),
     UserId      BIGINT        NOT NULL CONSTRAINT FK_RetrievalLogs_Users REFERENCES dbo.Users(Id),
+    PurposeTag  INT           NOT NULL CONSTRAINT DF_RetrievalLogs_PurposeTag DEFAULT 0,
     Purpose     NVARCHAR(256) NOT NULL,
     CopyPath    NVARCHAR(512) NOT NULL,
     RetrievedAt DATETIME2     NOT NULL CONSTRAINT DF_RetrievalLogs_RetrievedAt DEFAULT SYSUTCDATETIME()
@@ -80,6 +81,9 @@ CREATE INDEX IX_RetrievalLogs_CaseId ON dbo.RetrievalLogs(CaseId);
 GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RetrievalLogs_UserId')
 CREATE INDEX IX_RetrievalLogs_UserId ON dbo.RetrievalLogs(UserId);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RetrievalLogs_PurposeTag')
+CREATE INDEX IX_RetrievalLogs_PurposeTag ON dbo.RetrievalLogs(PurposeTag);
 GO
 
 -- 初始管理员账号（密码请在首次登录后由系统通过用户管理接口重置/创建）

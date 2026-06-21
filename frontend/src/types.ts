@@ -1,3 +1,17 @@
+export const RetrievalPurposeTagOptions = [
+  { value: 0, label: '庭审质证展示' },
+  { value: 1, label: '法庭辩论展示' },
+  { value: 2, label: '合议庭评议参考' },
+  { value: 3, label: '案件汇报讨论' },
+  { value: 4, label: '检察委员会审议' },
+  { value: 99, label: '其他' }
+] as const
+
+export function getPurposeTagName(value: number): string {
+  const found = RetrievalPurposeTagOptions.find((o) => o.value === value)
+  return found ? found.label : '其他'
+}
+
 export interface AuthUser {
   id: number
   username: string
@@ -53,6 +67,8 @@ export interface RetrievalLogDto {
   caseNumber: string
   userId: number
   userName: string
+  purposeTag: number
+  purposeTagName: string
   purpose: string
   retrievedAt: string
 }

@@ -41,13 +41,13 @@ export const evidenceApi = {
 }
 
 export const retrievalApi = {
-  create: (data: { evidenceId: number; purpose: string }) =>
+  create: (data: { evidenceId: number; purposeTag: number; purpose: string }) =>
     client.post<RetrievalLogDto>('/retrieval', data).then((r) => r.data),
   download: (id: number) =>
     client.get<Blob>(`/retrieval/${id}/download`, { responseType: 'blob' }).then((r) => r.data)
 }
 
 export const logsApi = {
-  list: (params: { caseId?: number; userId?: number; purpose?: string }) =>
+  list: (params: { caseId?: number; userId?: number; purposeTag?: number; purpose?: string }) =>
     client.get<RetrievalLogDto[]>('/logs', { params }).then((r) => r.data)
 }

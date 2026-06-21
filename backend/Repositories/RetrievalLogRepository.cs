@@ -1,4 +1,5 @@
 using JudicialEvidence.Api.Data;
+using JudicialEvidence.Api.Models;
 using JudicialEvidence.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,7 +7,7 @@ namespace JudicialEvidence.Api.Repositories;
 
 public interface IRetrievalLogRepository
 {
-    Task<List<RetrievalLog>> ListAsync(long? caseId, long? userId, string? purpose);
+    Task<List<RetrievalLog>> ListAsync(long? caseId, long? userId, RetrievalPurposeTag? purposeTag, string? purpose);
     Task<RetrievalLog?> GetByIdAsync(long id);
     Task AddAsync(RetrievalLog entity);
     Task SaveChangesAsync();
@@ -17,7 +18,7 @@ public class RetrievalLogRepository : IRetrievalLogRepository
     private readonly AppDbContext _db;
     public RetrievalLogRepository(AppDbContext db) => _db = db;
 
-    public async Task<List<RetrievalLog>> ListAsync(long? caseId, long? userId, string? purpose)
+    public async Task<List<RetrievalLog>> ListAsync(long? caseId, long? userId, RetrievalPurposeTag? purposeTag, string? purpose)
     {
         var q = _db.RetrievalLogs
             .Include(r => r.Evidence)
@@ -27,6 +28,8 @@ public class RetrievalLogRepository : IRetrievalLogRepository
 
         if (caseId.HasValue) q = q.Where(r => r.CaseId == caseId.Value);
         if (userId.HasValue) q = q.Where(r => r.UserId == userId.Value);
+        if (purposeTag.HasValue)
+            q = q.Where(r => r.PurposeTag == purposeTag.Value);
         if (!string.IsNullOrWhiteSpace(purpose))
             q = q.Where(r => r.Purpose.Contains(purpose));
 

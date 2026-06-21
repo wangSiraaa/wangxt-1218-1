@@ -24,6 +24,47 @@ public enum EvidenceStatus
     Retrieved = 3
 }
 
+public enum RetrievalPurposeTag
+{
+    CourtHearingExhibit = 0,
+    CourtDebate = 1,
+    CollegiatePanel = 2,
+    CaseReport = 3,
+    ProsecutorialCommittee = 4,
+    Other = 99
+}
+
+public static class RetrievalPurposeTagNames
+{
+    public const string CourtHearingExhibit = "庭审质证展示";
+    public const string CourtDebate = "法庭辩论展示";
+    public const string CollegiatePanel = "合议庭评议参考";
+    public const string CaseReport = "案件汇报讨论";
+    public const string ProsecutorialCommittee = "检察委员会审议";
+    public const string Other = "其他";
+
+    public static string From(RetrievalPurposeTag tag) => tag switch
+    {
+        RetrievalPurposeTag.CourtHearingExhibit => CourtHearingExhibit,
+        RetrievalPurposeTag.CourtDebate => CourtDebate,
+        RetrievalPurposeTag.CollegiatePanel => CollegiatePanel,
+        RetrievalPurposeTag.CaseReport => CaseReport,
+        RetrievalPurposeTag.ProsecutorialCommittee => ProsecutorialCommittee,
+        RetrievalPurposeTag.Other => Other,
+        _ => Other
+    };
+
+    public static readonly Dictionary<RetrievalPurposeTag, string> All = new()
+    {
+        { RetrievalPurposeTag.CourtHearingExhibit, CourtHearingExhibit },
+        { RetrievalPurposeTag.CourtDebate, CourtDebate },
+        { RetrievalPurposeTag.CollegiatePanel, CollegiatePanel },
+        { RetrievalPurposeTag.CaseReport, CaseReport },
+        { RetrievalPurposeTag.ProsecutorialCommittee, ProsecutorialCommittee },
+        { RetrievalPurposeTag.Other, Other }
+    };
+}
+
 public static class RoleNames
 {
     public const string Admin = "Admin";

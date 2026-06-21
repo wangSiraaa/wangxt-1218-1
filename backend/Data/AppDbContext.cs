@@ -62,6 +62,9 @@ public class AppDbContext : DbContext
         {
             b.HasIndex(r => r.CaseId);
             b.HasIndex(r => r.UserId);
+            b.HasIndex(r => r.PurposeTag);
+            b.Property(r => r.PurposeTag)
+             .HasDefaultValue(RetrievalPurposeTag.CourtHearingExhibit);
             b.HasOne(r => r.Evidence)
              .WithMany(e => e.Retrievals)
              .HasForeignKey(r => r.EvidenceId)
