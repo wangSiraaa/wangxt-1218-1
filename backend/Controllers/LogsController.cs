@@ -7,7 +7,7 @@ namespace JudicialEvidence.Api.Controllers;
 
 [ApiController]
 [Route("api/logs")]
-[Authorize(Roles = "Admin,Prosecutor")]
+[Authorize(Roles = "Admin,Prosecutor,Clerk")]
 public class LogsController : ControllerBase
 {
     private readonly IRetrievalService _retrieval;

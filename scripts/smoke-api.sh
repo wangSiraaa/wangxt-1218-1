@@ -61,9 +61,18 @@ echo "[9] 下载庭审副本 -> 期望 200 并返回内容"
 DL=$(curl -s -o "$TMP/copy.txt" -w "%{http_code}" "$BASE/api/retrieval/$LOG_ID/download" -H "Authorization: Bearer $CLERK_TOKEN")
 echo "  HTTP $DL, 内容: $(cat "$TMP/copy.txt")"
 
-echo "[10] 调阅日志查询 -> 期望含案件/人员/用途"
+echo "[10] 调阅日志查询(检察官) -> 期望含案件/人员/用途"
 LOGS=$(curl -s "$BASE/api/logs?caseId=$CASE_ID" -H "Authorization: Bearer $PROC_TOKEN")
 echo "  $LOGS" | head -c 400
+
+echo ""
+echo "[11] 书记员查询调阅日志(权限验证) -> 期望 200 不被 403 拦截"
+LOGS_CLERK=$(curl -s -o /tmp/logs_clerk.json -w "%{http_code}" "$BASE/api/logs?caseId=$CASE_ID" -H "Authorization: Bearer $CLERK_TOKEN")
+echo "  HTTP $LOGS_CLERK"
+CLERK_LOG_COUNT=$(python3 -c 'import sys,json;print(len(json.load(open("/tmp/logs_clerk.json"))))')
+echo "  书记员可见调阅日志条数: $CLERK_LOG_COUNT"
+CLERK_LOG_CONTENT=$(python3 -c 'import sys,json;logs=json.load(open("/tmp/logs_clerk.json"));print(f"caseNumber={logs[0][\"caseNumber\"]}, userName={logs[0][\"userName\"]}, purpose={logs[0][\"purpose\"]}")' 2>/dev/null)
+echo "  日志内容: $CLERK_LOG_CONTENT"
 
 echo ""
 echo "[done] 端到端业务流程测试完成"

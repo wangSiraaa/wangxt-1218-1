@@ -34,11 +34,14 @@ async function loadEvidence() {
   if (!selectedCaseId.value) return
   selectedEvidenceId.value = undefined
   evidences.value = await evidenceApi.list(selectedCaseId.value)
+  await loadLogs()
 }
 
 async function loadLogs() {
   try {
-    logs.value = await logsApi.list({})
+    const params: { caseId?: number } = {}
+    if (selectedCaseId.value) params.caseId = selectedCaseId.value
+    logs.value = await logsApi.list(params)
   } catch {
     /* ignore */
   }
